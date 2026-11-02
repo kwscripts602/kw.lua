@@ -1,4 +1,4 @@
--- KING LEGACY - KW EFEITOS, KW MAPA e ESP PLAYER v34
+-- KING LEGACY - KW EFEITOS, KW MAPA e ESP PLAYER v35
 -- Design: Vermelho e Preto | Minimizar | Fechar | Toggle
 
 local Players = game:GetService("Players")
@@ -8,7 +8,7 @@ local Lighting = game:GetService("Lighting")
 -- ==================== CONFIG EFEITOS ====================
 local ativoEfeitos = true
 local removendoGraficos = true
-local percentualEfeitos = 80
+local percentualEfeitos = 85 -- Alterado para 85%
 local congeladosEfeitos = setmetatable({}, {__mode = "k"})
 
 -- ==================== CONFIG ESP ====================
@@ -85,7 +85,7 @@ end
 -- ==================== CONFIG MAPA ====================
 local ativoMapa = true
 local removendoMapa = true
-local percentualMapa = 80 
+local percentualMapa = 99 -- Alterado para 99%
 local efeitosRemovidos = {}
 
 local function aplicarMapa()
@@ -611,4 +611,4 @@ task.spawn(function()
     end
 end)
 
-print("[KW] Painel v34 ativo (Aura Vermelha / Nick Branco).")
+print("[KW] Painel v35 ativo (Efeitos 85% / Mapa 99% / ESP Vermelho).")
