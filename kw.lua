@@ -1,4 +1,4 @@
--- KING LEGACY - KW EFEITOS, KW MAPA e ESP PLAYER v32 (Final)
+-- KING LEGACY - KW EFEITOS, KW MAPA e ESP PLAYER v34
 -- Design: Vermelho e Preto | Minimizar | Fechar | Toggle
 
 local Players = game:GetService("Players")
@@ -127,48 +127,79 @@ local function restaurarMapa()
 end
 
 -- ==================== LOGICA ESP PLAYER ====================
-local function atualizarESP()
-    if not espAtivado then
-        for plr, h in pairs(espHighlights) do
-            if h then h:Destroy() end
-        end
-        espHighlights = {}
-        return
+local function limparESP()
+    for plr, data in pairs(espHighlights) do
+        if data.Highlight then data.Highlight:Destroy() end
+        if data.Billboard then data.Billboard:Destroy() end
+    end
+    espHighlights = {}
+end
+
+local function aplicarESP(plr)
+    if not espAtivado or plr == LocalPlayer then return end
+    if not plr.Character or not plr.Character:FindFirstChild("HumanoidRootPart") then return end
+    
+    if espHighlights[plr] then
+        if espHighlights[plr].Highlight then espHighlights[plr].Highlight:Destroy() end
+        if espHighlights[plr].Billboard then espHighlights[plr].Billboard:Destroy() end
     end
 
+    -- Aura Vermelha
+    local h = Instance.new("Highlight")
+    h.Name = "KW_ESP_Highlight"
+    h.Adornee = plr.Character
+    h.FillColor = Color3.fromRGB(180, 0, 0)
+    h.OutlineColor = Color3.fromRGB(255, 0, 0)
+    h.FillTransparency = 0.5
+    h.OutlineTransparency = 0
+    h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    h.Parent = plr.Character
+
+    -- Nick Branco
+    local bg = Instance.new("BillboardGui")
+    bg.Name = "KW_ESP_Name"
+    bg.Size = UDim2.new(0, 100, 0, 20)
+    bg.StudsOffset = Vector3.new(0, 3, 0)
+    bg.AlwaysOnTop = true
+    bg.Parent = plr.Character:FindFirstChild("Head") or plr.Character:FindFirstChild("HumanoidRootPart")
+
+    local txt = Instance.new("TextLabel")
+    txt.Size = UDim2.new(1, 0, 1, 0)
+    txt.BackgroundTransparency = 1
+    txt.Text = plr.Name
+    txt.TextColor3 = Color3.fromRGB(255, 255, 255)
+    txt.TextStrokeTransparency = 0
+    txt.Font = Enum.Font.GothamBold
+    txt.TextSize = 14
+    txt.Parent = bg
+
+    espHighlights[plr] = {Highlight = h, Billboard = bg}
+end
+
+local function atualizarTodosESP()
+    if not espAtivado then
+        limparESP()
+        return
+    end
     for _, plr in ipairs(Players:GetPlayers()) do
-        if plr ~= LocalPlayer and plr.Character then
-            if not espHighlights[plr] or not espHighlights[plr].Parent then
-                local h = Instance.new("Highlight")
-                h.Name = "KW_ESP"
-                h.Adornee = plr.Character
-                h.FillColor = Color3.fromRGB(255, 255, 255)
-                h.OutlineColor = Color3.fromRGB(255, 255, 255)
-                h.FillTransparency = 0.5
-                h.OutlineTransparency = 0
-                h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-                h.Parent = plr.Character
-                
-                local bg = Instance.new("BillboardGui")
-                bg.Name = "KW_ESP_Name"
-                bg.Size = UDim2.new(0, 100, 0, 20)
-                bg.StudsOffset = Vector3.new(0, 3, 0)
-                bg.AlwaysOnTop = true
-                bg.Parent = plr.Character:FindFirstChild("Head") or plr.Character:FindFirstChild("HumanoidRootPart")
-                
-                local txt = Instance.new("TextLabel")
-                txt.Size = UDim2.new(1, 0, 1, 0)
-                txt.BackgroundTransparency = 1
-                txt.Text = plr.Name
-                txt.TextColor3 = Color3.fromRGB(255, 255, 255)
-                txt.TextStrokeTransparency = 0
-                txt.Font = Enum.Font.GothamBold
-                txt.TextSize = 14
-                txt.Parent = bg
-                
-                espHighlights[plr] = h
-            end
-        end
+        aplicarESP(plr)
+    end
+end
+
+-- Carregar em novos e respawn
+Players.PlayerAdded:Connect(function(plr)
+    plr.CharacterAdded:Connect(function()
+        task.wait(1)
+        if espAtivado then aplicarESP(plr) end
+    end)
+end)
+
+for _, plr in ipairs(Players:GetPlayers()) do
+    if plr ~= LocalPlayer then
+        plr.CharacterAdded:Connect(function()
+            task.wait(1)
+            if espAtivado then aplicarESP(plr) end
+        end)
     end
 end
 
@@ -455,7 +486,7 @@ btnToggleESP.MouseButton1Click:Connect(function()
     espAtivado = not espAtivado
     btnToggleESP.Text = espAtivado and "ESP PLAYER: ON" or "ESP PLAYER: OFF"
     btnToggleESP.BackgroundColor3 = espAtivado and Color3.fromRGB(120, 0, 0) or Color3.fromRGB(40, 40, 40)
-    atualizarESP()
+    atualizarTodosESP()
 end)
 
 local minEfeitos = false
@@ -472,7 +503,7 @@ btnCloseEfeitos.MouseButton1Click:Connect(function()
     ativoEfeitos = false
     ativoMapa = false
     espAtivado = false
-    atualizarESP()
+    limparESP()
     restaurarMapa()
 end)
 
@@ -563,14 +594,21 @@ end)
 -- Motor Mapa
 aplicarMapa()
 
--- Motor ESP (Atualiza a cada 2 segundos para novos jogadores)
+-- Motor ESP (Loop de segurança)
+atualizarTodosESP()
 task.spawn(function()
     while true do
-        task.wait(2)
+        task.wait(3)
         if espAtivado then
-            atualizarESP()
+            for _, plr in ipairs(Players:GetPlayers()) do
+                if plr ~= LocalPlayer and plr.Character then
+                    if not espHighlights[plr] or not espHighlights[plr].Highlight or not espHighlights[plr].Highlight.Parent then
+                        aplicarESP(plr)
+                    end
+                end
+            end
         end
     end
 end)
 
-print("[KW] Painel v32 ativo com ESP Player.")
+print("[KW] Painel v34 ativo (Aura Vermelha / Nick Branco).")
