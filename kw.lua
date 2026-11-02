@@ -85,7 +85,7 @@ end
 -- ==================== CONFIG MAPA ====================
 local ativoMapa = true
 local removendoMapa = true
-local percentualMapa = 99 -- Alterado para 99%
+local percentualMapa = 99 -- Alterado para 50%
 local efeitosRemovidos = {}
 
 local function aplicarMapa()
