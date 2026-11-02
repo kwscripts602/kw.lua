@@ -1,4 +1,4 @@
--- KING LEGACY - KW EFEITOS, KW MAPA e ESP PLAYER v31
+-- KING LEGACY - KW EFEITOS, KW MAPA e ESP PLAYER v32 (Final)
 -- Design: Vermelho e Preto | Minimizar | Fechar | Toggle
 
 local Players = game:GetService("Players")
@@ -182,7 +182,7 @@ guiEfeitos.Parent = game:GetService("CoreGui")
 
 local frameEfeitos = Instance.new("Frame")
 frameEfeitos.Name = "MainFrame"
-frameEfeitos.Size = UDim2.new(0, 220, 0, 235) -- Aumentado para caber o botão ESP
+frameEfeitos.Size = UDim2.new(0, 220, 0, 235) 
 frameEfeitos.Position = UDim2.new(0, 20, 0.5, -117)
 frameEfeitos.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 frameEfeitos.BorderColor3 = Color3.fromRGB(180, 0, 0)
@@ -288,7 +288,6 @@ btnToggleEfeitos.Font = Enum.Font.GothamBold
 btnToggleEfeitos.TextSize = 12
 btnToggleEfeitos.Parent = contentEfeitos
 
--- NOVO BOTÃO: ESP PLAYER
 local btnToggleESP = Instance.new("TextButton")
 btnToggleESP.Size = UDim2.new(0, 200, 0, 30)
 btnToggleESP.Position = UDim2.new(0, 10, 0, 100)
@@ -531,4 +530,47 @@ end)
 -- ==================== MOTORES ====================
 -- Motor Efeitos
 task.spawn(function()
-    for _, obj in ipairs(workspace:
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("ParticleEmitter") or obj:IsA("Beam") or obj:IsA("Trail")
+           or obj:IsA("Fire") or obj:IsA("Smoke") or obj:IsA("Sparkles") then
+            processarEfeito(obj)
+        end
+    end
+end)
+
+workspace.DescendantAdded:Connect(function(obj)
+    if ativoEfeitos and removendoGraficos and (obj:IsA("ParticleEmitter") or obj:IsA("Beam") or obj:IsA("Trail") or obj:IsA("Fire") or obj:IsA("Smoke") or obj:IsA("Sparkles")) then
+        task.defer(processarEfeito, obj)
+    end
+end)
+
+task.spawn(function()
+    while ativoEfeitos do
+        task.wait(0.3)
+        if removendoGraficos then
+            local char = LocalPlayer.Character
+            if char then
+                for _, obj in ipairs(char:GetDescendants()) do
+                    if obj:IsA("ParticleEmitter") or obj:IsA("Beam") or obj:IsA("Trail") then
+                        processarEfeito(obj)
+                    end
+                end
+            end
+        end
+    end
+end)
+
+-- Motor Mapa
+aplicarMapa()
+
+-- Motor ESP (Atualiza a cada 2 segundos para novos jogadores)
+task.spawn(function()
+    while true do
+        task.wait(2)
+        if espAtivado then
+            atualizarESP()
+        end
+    end
+end)
+
+print("[KW] Painel v32 ativo com ESP Player.")
